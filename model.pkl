@@ -1,0 +1,40 @@
+import streamlit as st
+import pandas as pd
+import joblib  # for loading the model
+
+# Load the trained model (make sure you have your model saved as 'model.pkl')
+model = joblib.load('model.pkl')
+
+st.title("Sales Prediction App")
+
+# File uploader widget
+uploaded_file = st.file_uploader("Upload CSV file for prediction", type=["csv"])
+
+if uploaded_file is not None:
+    # Read CSV file into DataFrame
+    data = pd.read_csv(uploaded_file)
+
+    st.write("Data preview:")
+    st.dataframe(data.head())
+
+    # Optional: preprocess your data here if needed (e.g., encoding, filling missing values)
+    # For example:
+    # data.fillna(0, inplace=True)
+
+    # Predict sales
+    predictions = model.predict(data)
+
+    # Show predictions in the app
+    st.write("Predictions:")
+    st.write(predictions)
+
+    # Add predictions to DataFrame and allow user to download results
+    data['Predicted_Sales'] = predictions
+
+    csv = data.to_csv(index=False).encode('utf-8')
+    st.download_button(
+        label="Download Predictions as CSV",
+        data=csv,
+        file_name='predictions.csv',
+        mime='text/csv',
+    )
