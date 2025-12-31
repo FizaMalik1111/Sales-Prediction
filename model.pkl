@@ -1,0 +1,63 @@
+# Train a sales prediction model and save model.pkl for the user
+
+import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import OneHotEncoder
+from sklearn.compose import ColumnTransformer
+from sklearn.pipeline import Pipeline
+from sklearn.impute import SimpleImputer
+from sklearn.ensemble import RandomForestRegressor
+import pickle
+import os
+
+# Load dataset
+df = pd.read_csv("/mnt/data/Train.csv")
+
+# Features and target
+X = df.drop("Item_Outlet_Sales", axis=1)
+y = df["Item_Outlet_Sales"]
+
+# Identify column types
+numeric_features = X.select_dtypes(include=["int64", "float64"]).columns
+categorical_features = X.select_dtypes(include=["object"]).columns
+
+# Preprocessing
+numeric_transformer = Pipeline(steps=[
+    ("imputer", SimpleImputer(strategy="median"))
+])
+
+categorical_transformer = Pipeline(steps=[
+    ("imputer", SimpleImputer(strategy="most_frequent")),
+    ("onehot", OneHotEncoder(handle_unknown="ignore"))
+])
+
+preprocessor = ColumnTransformer(
+    transformers=[
+        ("num", numeric_transformer, numeric_features),
+        ("cat", categorical_transformer, categorical_features)
+    ]
+)
+
+# Model
+model = RandomForestRegressor(
+    n_estimators=200,
+    random_state=42,
+    n_jobs=-1
+)
+
+# Pipeline
+clf = Pipeline(steps=[
+    ("preprocessor", preprocessor),
+    ("model", model)
+])
+
+# Train model
+clf.fit(X, y)
+
+# Save model
+model_path = "/mnt/data/model.pkl"
+with open(model_path, "wb") as f:
+    pickle.dump(clf, f)
+
+model_path
